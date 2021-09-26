@@ -1,0 +1,137 @@
+#COMPROBACIONES
+#Probamos el conjunto de Replica
+#cliente1
+use torneo_futbol
+db.jugadores.insert(
+[{
+  "Nombre": "Leonel Messi",
+  "Equipo": "Argentina",
+  "Posicion": "Delantero",
+  "Goles": 0,
+  "Activo": true,
+  "tarjetas": [
+    {
+      "TarjetasAmarillas": 0,
+      "TarjetasRojas": 0
+    }
+  ],
+  "SancionActiva": false
+},{
+  "Nombre": "Neymar",
+  "Equipo": "Brasil",
+  "Posicion": "Extremo",
+  "Goles": 0,
+  "Activo": true,
+  "tarjetas": [
+    {
+      "TarjetasAmarillas": 0,
+      "TarjetasRojas": 0
+    }
+  ],
+  "SancionActiva": false
+},{
+  "Nombre": "Luis Diaz",
+  "Equipo": "Colombia",
+  "Posicion": "Extremo",
+  "Goles": 0,
+  "Activo": true,
+  "tarjetas": [
+    {
+      "TarjetasAmarillas": 0,
+      "TarjetasRojas": 0
+    }
+  ],
+  "SancionActiva": false
+},{
+  "Nombre": "Arturo Vidal",
+  "Equipo": "Chile",
+  "Posicion": "Volante",
+  "Goles": 0,
+  "Activo": true,
+  "tarjetas": [
+    {
+      "TarjetasAmarillas": 0,
+      "TarjetasRojas": 0
+    }
+  ],
+  "SancionActiva": false
+},{
+  "Nombre": "Wilker fariñez",
+  "Equipo": "Venezuela",
+  "Posicion": "Arquero",
+  "Goles": 0,
+  "Activo": true,
+  "tarjetas": [
+    {
+      "TarjetasAmarillas": 0,
+      "TarjetasRojas": 0
+    }
+  ],
+  "SancionActiva": false
+}]);
+#Comprueba la réplica en los secundarios
+#cliente2
+shows dbs;
+use torneo_futbol;
+show collections; 
+db.jugadores.find();
+#cliente3
+shows dbs;
+use torneo_futbol;
+show collections; 
+db.jugadores.find();
+
+#Ahora deshabilitaremos el servidor o instancia primaria para validar que los secundarios se reorganizan para que uno se haga primario
+#cliente1
+#Bajamos el nodo primario: en la consola escribiendo
+#Ventana1
+#CTRL + C
+#Verificamos estado del conjunto
+#cliente2
+rs.status();
+#cliente3
+rs.status();
+#Una de ellas se debe marcar como nuevo primario
+#Probamos insertando una segunda collection
+#cliente2
+shows dbs;
+use torneo_futbol;
+db.estadios.insert(
+[{
+  "Nombre": "Nilton Santos",
+  "Ciudad": "Río de Janeiro",
+  "Aforo": 44000,
+  "activo": true
+},{
+  "Nombre": "Olímpico Pedro Ludovico Teixeira",
+  "Ciudad": "Goiânia",
+  "Aforo": 13500,
+  "activo": true
+},{
+  "Nombre": "Mané Garrincha",
+  "Ciudad": "Brasilia",
+  "Aforo": 71400,
+  "activo": true
+},{
+  "Nombre": "Arena Pantanal",
+  "Ciudad": "Cuiabá",
+  "Aforo": 50000,
+  "activo": true
+}]);
+#Comprobamos en el otro servidor
+#cliente3
+use torneo_futbol;
+show collections; 
+db.estadios.find();
+#Levantaremos nuevamente el servidor primario inicial para verificar como el conjunto se reorganiza:
+#Cliente1
+mongod --replSet rs0 --dbpath repl_1 --port 27018
+#Verificamos su situación y si no es primario, lo convertimos en secundario
+#Cliente1
+mongors.status();
+rs.secondaryOk();
+#Comprobamos sus datos
+#Cliente1
+use torneo_futbol;
+show collections; 
+db.estadios.find();
